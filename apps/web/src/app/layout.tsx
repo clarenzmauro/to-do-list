@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../index.css";
 import Providers from "@/components/providers";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "to-do-list",
-	description: "to-do-list",
+	title: "to-do by clarenzmauro",
+	description: "A simple to-do list",
 };
 
 export default function RootLayout({
@@ -25,16 +26,20 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
-				<Providers>
-					<div className="grid grid-rows-[auto_1fr] h-svh">
-						{/* header removed */}
-						{children}
-					</div>
-				</Providers>
-			</body>
-		</html>
-	);
+		<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+		  <ThemeProvider
+			attribute="class"
+			defaultTheme="system"
+			enableSystem
+			disableTransitionOnChange
+		  >
+			<Providers>
+			  <div className="grid grid-rows-[auto_1fr] h-svh">
+				{children}
+			  </div>
+			</Providers>
+		  </ThemeProvider>
+		</body>
+	  </html>
+  );
 }

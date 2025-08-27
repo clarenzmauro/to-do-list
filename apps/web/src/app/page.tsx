@@ -24,6 +24,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@to-do-list/backend/convex/_generated/api";
 import type { Id } from "@to-do-list/backend/convex/_generated/dataModel";
 
+import { useUser, useClerk, UserButton } from '@clerk/nextjs'
+
 export default function TodosPage() {
 
 	// states
@@ -33,20 +35,23 @@ export default function TodosPage() {
 	const [updatingTitle, setUpdatingTitle] = useState("");
 	const [updatingDescription, setUpdatingDescription] = useState("");
 	const [filterType, setFilterType] = useState<'all' | 'completed' | 'incomplete' | 'newest'>('newest');
+	const { user, isLoaded } = useUser();
+	const { signOut } = useClerk();
 
 	const filterLabels = {
 		newest: 'Newest',
 		all: 'All',
 		incomplete: 'Pending',
 		completed: 'Completed'
-	}
+	};
 
 	// all client backend calls
 	const todos = useQuery(
 		filterType === 'all' ? api.todos.getAll :
 		filterType === 'completed' ? api.todos.getCompleted :
 		filterType === 'incomplete' ? api.todos.getIncomplete :
-		api.todos.getAllNewest
+		api.todos.getAllNewest,
+		user ? { userId: user.id } : "skip"
 	);
 	const createTodoMutation = useMutation(api.todos.create);
 	const updateTodoMutation = useMutation(api.todos.updateTodo);
@@ -60,11 +65,12 @@ export default function TodosPage() {
 		const title = newTodoTitle.trim();
 		const description = newTodoDescription.trim();
 
-		if (!title) return;
+		if (!title || !user) return;
 
 		await createTodoMutation({
 			title: title,
-			description: description	
+			description: description,
+			userId: user.id	
 		});
 
 		setNewTodoTitle("");
@@ -85,6 +91,7 @@ export default function TodosPage() {
 			id: updatingId!,
 			title: updatingTitle.trim(),
 			description: updatingDescription.trim(),
+			userId: user!.id
 		});
 
 		setUpdatingId(null);
@@ -100,12 +107,19 @@ export default function TodosPage() {
 
 	// toggle completed
 	const handleToggleTodo = (id: Id<"todos">, currentCompleted: boolean) => {
-		toggleTodoMutation({ id, isCompleted: !currentCompleted });
+		toggleTodoMutation({ 
+			id, 
+			isCompleted: !currentCompleted, 
+			userId: user!.id
+		});
 	};
 
 	// delete todo
 	const handleDeleteTodo = (id: Id<"todos">) => {
-		deleteTodoMutation({ id });
+		deleteTodoMutation({ 
+			id,
+			userId: user!.id 
+		});
 	};
 
 	// display different 'no todo' messages based on the current filter
@@ -122,13 +136,59 @@ export default function TodosPage() {
 		}
 	}
 
+	const handleLogout = () => {
+		signOut({ redirectUrl: '/' });
+	}
+
+	if (!isLoaded) {
+		return (
+		  <div className="mx-auto w-full max-w-md py-10">
+			<Card>
+			  <CardContent className="flex justify-center py-4">
+				<Loader2 className="h-6 w-6 animate-spin" />
+			  </CardContent>
+			</Card>
+		  </div>
+		)
+	  }
+	  
+	  // Show sign-in if not authenticated
+	  if (!user) {
+		return (
+		  <div className="mx-auto w-full max-w-md py-10">
+			<Card>
+			  <CardHeader>
+				<CardTitle>Welcome!</CardTitle>
+				<CardDescription>Please sign in to manage your todos</CardDescription>
+			  </CardHeader>
+			  <CardContent>
+				<Button asChild>
+				  <a href="/sign-in">Sign In</a>
+				</Button>
+			  </CardContent>
+			</Card>
+		  </div>
+		)
+	  }
+
 	return (
 		<div className="mx-auto w-full max-w-md py-10">
 			<Card>
 				{/* title */}
 				<CardHeader>
-					<CardTitle>Todo List</CardTitle>
-					<CardDescription>Manage your tasks efficiently</CardDescription>
+					<CardTitle className="flex items-center justify-between">
+						<span>Todo List</span>
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleLogout}
+							>
+								Logout
+							</Button>
+							<UserButton />
+						</div>
+					</CardTitle>
 				</CardHeader>
 
 				<CardContent>

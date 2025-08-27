@@ -1,18 +1,27 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// fetch all todo
+// fetch all todo filtered by userId
 export const getAll = query({
-	handler: async (ctx) => {
-		return await ctx.db.query("todos").collect();
+	args: {
+		userId: v.string()
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db.query("todos")
+			.filter(q => q.eq(q.field("userId"), args.userId))
+			.collect();
 	},
 });
 
 // filter for completion status
 // fetch all completed todo
 export const getCompleted = query({
-	handler: async (ctx) => {
+	args: {
+		userId: v.string()
+	},
+	handler: async (ctx, args) => {
 		return await ctx.db.query("todos")
+			.filter(q => q.eq(q.field("userId"), args.userId))
 			.filter(q => q.eq(q.field("isCompleted"), true))
 			.collect();
 	}
@@ -20,8 +29,12 @@ export const getCompleted = query({
 
 // fetch all non-completed todo
 export const getIncomplete = query({
-	handler: async (ctx) => {
+	args: {
+		userId: v.string()
+	},
+	handler: async (ctx, args) => {
 		return await ctx.db.query("todos")
+			.filter(q => q.eq(q.field("userId"), args.userId))
 			.filter(q => q.eq(q.field("isCompleted"), false))
 			.collect();
 	},
@@ -30,8 +43,12 @@ export const getIncomplete = query({
 // sort for creation time
 // newest first
 export const getAllNewest = query({
-	handler: async (ctx) => {
+	args: {
+		userId: v.string()
+	},
+	handler: async (ctx, args) => {
 		return await ctx.db.query("todos")
+			.filter(q => q.eq(q.field("userId"), args.userId))
 			.order("desc")
 			.collect();
 	},
@@ -39,8 +56,12 @@ export const getAllNewest = query({
 
 // combination of completion status and sorting
 export const getIncompleteNewest = query({
-	handler: async (ctx) => {
+	args: {
+		userId: v.string()
+	},
+	handler: async (ctx, args) => {
 		return await ctx.db.query("todos")
+			.filter(q => q.eq(q.field("userId"), args.userId))
 			.filter(q => q.eq(q.field("isCompleted"), false))
 			.order("desc")
 			.collect();
@@ -52,9 +73,12 @@ export const create = mutation({
 	args: {
 		title: v.string(),
 		description: v.string(),
+		userId: v.string()
 	},
 	handler: async (ctx, args) => {
+
 		const newTodoId = await ctx.db.insert("todos", {
+			userId: args.userId,
 			title: args.title,
 			description: args.description,
 			isCompleted: false,
@@ -69,17 +93,17 @@ export const updateTodo = mutation({
 		id: v.id("todos"),
 		title: v.optional(v.string()),
 		description: v.optional(v.string()),
+		userId: v.string(),
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.id, {
 			...(args.title !== undefined && {
 				title: args.title
 			}),
-			...(args.description !== undefined && {
+				...(args.description !== undefined && {
 				description: args.description
 			}),
 		});
-
 		return await ctx.db.get(args.id);
 	},
 });
@@ -89,10 +113,12 @@ export const toggle = mutation({
 	args: {
 		id: v.id("todos"),
 		isCompleted: v.boolean(),
+		userId: v.string()
 	},
 	handler: async (ctx, args) => {
+
 		await ctx.db.patch(args.id, { isCompleted: args.isCompleted });
-		return { success: true };
+		return { success: true };	
 	},
 });
 
@@ -100,9 +126,11 @@ export const toggle = mutation({
 export const deleteTodo = mutation({
 	args: {
 		id: v.id("todos"),
+		userId: v.string()
 	},
 	handler: async (ctx, args) => {
+		
 		await ctx.db.delete(args.id);
-		return { success: true };
+		return { success: true };		
 	},
 });
