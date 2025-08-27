@@ -8,6 +8,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Loader2, Trash2, Edit } from "lucide-react";
@@ -25,9 +32,22 @@ export default function TodosPage() {
 	const [updatingId, setUpdatingId] = useState<Id<"todos"> | null>(null);
 	const [updatingTitle, setUpdatingTitle] = useState("");
 	const [updatingDescription, setUpdatingDescription] = useState("");
+	const [filterType, setFilterType] = useState<'all' | 'completed' | 'incomplete' | 'newest'>('newest');
+
+	const filterLabels = {
+		newest: 'Newest',
+		all: 'All',
+		incomplete: 'Pending',
+		completed: 'Completed'
+	}
 
 	// all client backend calls
-	const todos = useQuery(api.todos.getAll);
+	const todos = useQuery(
+		filterType === 'all' ? api.todos.getAll :
+		filterType === 'completed' ? api.todos.getCompleted :
+		filterType === 'incomplete' ? api.todos.getIncomplete :
+		api.todos.getAllNewest
+	);
 	const createTodoMutation = useMutation(api.todos.create);
 	const updateTodoMutation = useMutation(api.todos.updateTodo);
 	const toggleTodoMutation = useMutation(api.todos.toggle);
@@ -88,6 +108,20 @@ export default function TodosPage() {
 		deleteTodoMutation({ id });
 	};
 
+	// display different 'no todo' messages based on the current filter
+	const getNoDataMessage = () => {
+		switch (filterType) {
+			case 'completed':
+				return 'No completed todos yet!';
+			case 'incomplete':
+				return 'No pending todos!';
+			case 'newest':
+			case 'all':
+			default:
+				return 'No todos yet. Add one above!';
+		}
+	}
+
 	return (
 		<div className="mx-auto w-full max-w-md py-10">
 			<Card>
@@ -118,6 +152,53 @@ export default function TodosPage() {
 						</Button>
 					</form>
 
+					{/* dropdown for the filter */}
+					<div className="mb-4">
+						<DropdownMenu>
+							{/* show default */}
+							<DropdownMenuTrigger asChild>
+								<Button variant="outline" className="justify-between">
+									{filterLabels[filterType]}
+									<ChevronDown className="h-4 w-4 opacity-50" />
+								</Button>
+							</DropdownMenuTrigger>
+							{/* show menu (options) */}
+							<DropdownMenuContent align="start" className="w-48">
+								{/* newest */}
+								<DropdownMenuItem
+									onClick={() => setFilterType('newest')}
+									className={filterType === 'newest' ? 'bg-accent' : ''}
+								>
+									Newest
+								</DropdownMenuItem>
+
+								{/* all */}
+								<DropdownMenuItem
+									onClick={() => setFilterType('all')}
+									className={filterType === 'all' ? 'bg-accent' : ''}
+								>
+									All Todos
+								</DropdownMenuItem>
+
+								{/* pending */}
+								<DropdownMenuItem
+									onClick={() => setFilterType('incomplete')}
+									className={filterType === 'incomplete' ? 'bg-accent' : ''}
+								>
+									Pending
+								</DropdownMenuItem>
+
+								{/* completed */}
+								<DropdownMenuItem
+									onClick={() => setFilterType('completed')}
+									className={filterType === 'completed' ? 'bg-accent' : ''}
+								>
+									Completed
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+						
 					{/* display the todos */}
 					{todos === undefined ? (
 						<div className="flex justify-center py-4">
@@ -125,7 +206,7 @@ export default function TodosPage() {
 						</div>
 					// if there's no todos, display this
 					) : todos.length === 0 ? (
-						<p className="py-4 text-center">No todos yet. Add one above!</p>
+						<p className="py-4 text-center">{getNoDataMessage()}</p>
 					) : (
 						// if there are todos, display this
 						<ul className="space-y-2">
