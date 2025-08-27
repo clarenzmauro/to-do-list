@@ -1,0 +1,22 @@
+{
+	"name": "to-do-list",
+	"private": true,
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev": "turbo dev",
+		"build": "turbo build",
+		"check-types": "turbo check-types",
+		"dev:native": "turbo -F native dev",
+		"dev:web": "turbo -F web dev",
+		"dev:server": "turbo -F @to-do-list/backend dev",
+		"dev:setup": "turbo -F @to-do-list/backend dev:setup"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"turbo": "^2.5.4"
+	},
+	"packageManager": "bun@1.2.18"
+}
