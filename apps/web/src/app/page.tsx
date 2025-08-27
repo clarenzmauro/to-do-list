@@ -209,3 +209,5 @@ export default function TodosPage() {
 		</div>
 	);
 }
+
+export const dynamic = 'force-dynamic';
