@@ -9,9 +9,11 @@
 	"license": "ISC",
 	"description": "",
 	"devDependencies": {
-		"typescript": "^5.9.2"
+		"typescript": "^5.9.2",
+		"@types/node": "^20.0.0"
 	},
 	"dependencies": {
-		"convex": "^1.25.4"
+		"convex": "^1.25.4",
+		"@upstash/redis": "^1.28.4"
 	}
 }

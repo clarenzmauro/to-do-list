@@ -7,5 +7,6 @@ export default defineSchema({
 		title: v.string(),
 		description: v.string(),
 		isCompleted: v.boolean(),
+		imageUrl: v.optional(v.string()),
 	}),
 });

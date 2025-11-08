@@ -47,10 +47,13 @@ export const getAllNewest = query({
 		userId: v.string()
 	},
 	handler: async (ctx, args) => {
-		return await ctx.db.query("todos")
+		// Fetch from database - caching is handled separately through actions
+		const todos = await ctx.db.query("todos")
 			.filter(q => q.eq(q.field("userId"), args.userId))
 			.order("desc")
 			.collect();
+
+		return todos;
 	},
 });
 
@@ -73,16 +76,18 @@ export const create = mutation({
 	args: {
 		title: v.string(),
 		description: v.string(),
-		userId: v.string()
+		userId: v.string(),
+		imageUrl: v.optional(v.string())
 	},
 	handler: async (ctx, args) => {
-
 		const newTodoId = await ctx.db.insert("todos", {
 			userId: args.userId,
 			title: args.title,
 			description: args.description,
 			isCompleted: false,
+			imageUrl: args.imageUrl
 		});
+
 		return await ctx.db.get(newTodoId);
 	},
 });
@@ -93,6 +98,7 @@ export const updateTodo = mutation({
 		id: v.id("todos"),
 		title: v.optional(v.string()),
 		description: v.optional(v.string()),
+		imageUrl: v.optional(v.union(v.string(), v.null())),
 		userId: v.string(),
 	},
 	handler: async (ctx, args) => {
@@ -100,8 +106,11 @@ export const updateTodo = mutation({
 			...(args.title !== undefined && {
 				title: args.title
 			}),
-				...(args.description !== undefined && {
+			...(args.description !== undefined && {
 				description: args.description
+			}),
+			...(args.imageUrl !== undefined && {
+				imageUrl: args.imageUrl === null ? undefined : args.imageUrl
 			}),
 		});
 		return await ctx.db.get(args.id);
@@ -118,7 +127,8 @@ export const toggle = mutation({
 	handler: async (ctx, args) => {
 
 		await ctx.db.patch(args.id, { isCompleted: args.isCompleted });
-		return { success: true };	
+
+		return { success: true };
 	},
 });
 
@@ -129,8 +139,9 @@ export const deleteTodo = mutation({
 		userId: v.string()
 	},
 	handler: async (ctx, args) => {
-		
+
 		await ctx.db.delete(args.id);
-		return { success: true };		
+
+		return { success: true };
 	},
 });

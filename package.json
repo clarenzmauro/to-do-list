@@ -15,7 +15,8 @@
 		"dev:setup": "turbo -F @to-do-list/backend dev:setup"
 	},
 	"dependencies": {
-		"@clerk/nextjs": "^6.31.5"
+		"@clerk/nextjs": "^6.31.5",
+		"convex": "^1.28.2"
 	},
 	"devDependencies": {
 		"turbo": "^2.5.4"
